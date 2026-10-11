@@ -19,6 +19,7 @@ from datetime import datetime
 from dotenv import load_dotenv
 from langchain.agents import create_agent
 from langchain_openai import ChatOpenAI
+from pydantic import SecretStr
 
 load_dotenv()
 
@@ -40,10 +41,17 @@ def add(a: float, b: float) -> float:
 # ---------- 模型 ----------
 # 默认:智谱 GLM-4.7-Flash —— 免费、200K 上下文、支持工具调用、国内直连
 # 走的是 OpenAI 兼容协议,所以换任何供应商都只改 .env 三个变量,代码不用动
+_api_key = os.getenv("MODEL_API_KEY")
+if not _api_key:
+    raise RuntimeError("没找到 MODEL_API_KEY —— 请检查 .env 文件")
+
 model = ChatOpenAI(
     model=os.getenv("MODEL_NAME", "glm-4.7-flash"),
     base_url=os.getenv("MODEL_BASE_URL", "https://open.bigmodel.cn/api/paas/v4"),
-    api_key=os.getenv("MODEL_API_KEY"),
+    # ⚠️ 用 SecretStr 包一层,别直接传 str:
+    #    ChatOpenAI 的类型标注是 SecretStr|None|Callable,不含 str,
+    #    直接传字符串 Pylance 会标红(虽然运行时 pydantic 会自动转换、照样能跑)
+    api_key=SecretStr(_api_key),
     temperature=0,
 )
 

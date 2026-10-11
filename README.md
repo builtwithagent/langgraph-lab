@@ -5,7 +5,7 @@
 ## 进度台账
 
 - [x] **T0** 环境 + 第一个 `create_agent`(`01-first-agent/`)
-- [ ] **T1** 不用框架,手搓 agent loop
+- [x] **T1** 不用框架,手搓 agent loop(`02-raw-agent-loop/`)
 - [ ] **T2** 第一个 StateGraph
 - [ ] **T3** 状态与记忆
 - [ ] **T4** 持久化与断点续跑

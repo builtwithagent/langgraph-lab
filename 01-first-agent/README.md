@@ -52,6 +52,43 @@ Ai Message       → 现在时间是 2026-10-11 09:12:42;1234 + 5678 = 6912
 3. **`add` 返回 `6912.0` 而不是 `6912`**
    因为函数签名写的是 `a: float, b: float`。想让工具返回整数,把类型标注改成 `int` 即可 —— **顺便体会到一件事:工具的返回类型也是模型能感知的**。
 
+4. **Pylance 标红 `api_key` —— 不是你的代码有问题,是 LangChain 自己的类型标注有毛病**
+
+   ```python
+   api_key=os.getenv("MODEL_API_KEY")   # ← 这里会被标红
+   ```
+   ```
+   Argument of type "str | None" cannot be assigned to parameter "api_key"
+   of type "SecretStr | (() -> str) | (() -> Awaitable[str]) | None"
+   ```
+
+   **根因**:翻源码 `.venv/Lib/site-packages/langchain_openai/chat_models/base.py:810` 看到
+
+   ```python
+   openai_api_key: (
+       SecretStr | None | Callable[[], str] | Callable[[], Awaitable[str]]
+   ) = Field(alias="api_key", default=None)
+   ```
+
+   而紧跟其后的 docstring 却写着 *"Can be inferred from the `OPENAI_API_KEY` environment variable, **or specified as a string**"* ——
+   **文档说能传字符串,类型标注里却没有 `str`**。运行时 pydantic 会自动帮你转成 `SecretStr`,所以照样能跑,只是静态检查过不去。
+
+   **正确写法**(顺便把"没配 key"也一并处理):
+
+   ```python
+   from pydantic import SecretStr
+
+   _api_key = os.getenv("MODEL_API_KEY")
+   if not _api_key:
+       raise RuntimeError("没找到 MODEL_API_KEY —— 请检查 .env 文件")
+
+   model = ChatOpenAI(..., api_key=SecretStr(_api_key), ...)
+   ```
+
+   **两条经验**:
+   1. **类型报错 ≠ 不能跑** —— 先分清是"运行时会炸"还是"静态检查不满意"
+   2. 遇到这种不一致,**直接翻本地装的源码最快**(`.venv/Lib/site-packages/<包名>/`),比搜资料准
+
 ## 附:LangSmith 为什么不用在代码里写一行?
 
 **因为开关是环境变量,而"上报的钩子"是框架默认埋好的。**
