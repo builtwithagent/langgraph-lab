@@ -6,7 +6,7 @@
 
 - [x] **T0** 环境 + 第一个 `create_agent`(`01-first-agent/`)
 - [x] **T1** 不用框架,手搓 agent loop(`02-raw-agent-loop/`)
-- [ ] **T2** 第一个 StateGraph
+- [x] **T2** 第一个 StateGraph(`03-first-graph/`)
 - [ ] **T3** 状态与记忆
 - [ ] **T4** 持久化与断点续跑
 - [ ] **T5** 人在环 interrupt
